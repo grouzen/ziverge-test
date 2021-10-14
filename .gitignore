@@ -1,0 +1,8 @@
+target/
+blackbox.amd64
+.vscode/
+.metals/
+.bloop/
+.bsp/
+project/project/
+.idea
