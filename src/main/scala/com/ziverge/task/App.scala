@@ -26,7 +26,10 @@ object App extends IOApp {
     for {
       initTimestamp <- timer.clock.realTime(SECONDS)
       stateRef      <- Ref.of[IO, State](State(initTimestamp, Map.empty))
-      _             <- readFromStream(stateRef)
+
+      httpServer = new HttpServer(stateRef)
+
+      _ <- IO.race(httpServer.run, readFromStream(stateRef))
     } yield ExitCode.Success
 
   def readFromStream(stateRef: Ref[IO, State]): IO[Unit] =

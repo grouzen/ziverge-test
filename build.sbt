@@ -15,6 +15,9 @@ lazy val root = project
       JSON.circeGeneric,
       JSON.circeGenericExtras,
       JSON.circeParser,
+      Http.http4sDSL,
+      Http.http4sCirce,
+      Http.http4sBlazeServer,
       Testing.scalatest
     )
   )

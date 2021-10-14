@@ -19,18 +19,26 @@ object Deps {
     val scalatest = "org.scalatest" %% "scalatest" % "3.2.9" % "test"
   }
 
+  object Http {
+    val http4sDSL         = Orgs.http4s %% "http4s-dsl"          % Versions.http4s
+    val http4sBlazeServer = Orgs.http4s %% "http4s-blaze-server" % Versions.http4s
+    val http4sCirce       = Orgs.http4s %% "http4s-circe"        % Versions.http4s
+  }
+
 }
 
 object Orgs {
 
-  val fs2   = "co.fs2"
-  val circe = "io.circe"
+  val fs2    = "co.fs2"
+  val circe  = "io.circe"
+  val http4s = "org.http4s"
 
 }
 
 object Versions {
 
-  val fs2   = "2.5.9"
-  val circe = "0.14.1"
+  val fs2    = "2.5.9"
+  val circe  = "0.14.1"
+  val http4s = "0.21.30"
 
 }
