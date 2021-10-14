@@ -18,7 +18,7 @@ object App extends IOApp {
   val stdinBlocker: Blocker =
     Blocker.liftExecutionContext(ExecutionContext.fromExecutorService(Executors.newCachedThreadPool()))
 
-  val WindowPeriod: Long = 10L
+  val WindowPeriod: FiniteDuration = 2.seconds
 
   override def run(args: List[String]): IO[ExitCode] =
     for {
@@ -27,10 +27,24 @@ object App extends IOApp {
 
       httpServer = new HttpServer(stateRef)
 
-      _ <- IO.race(httpServer.run, readFromStream(stateRef))
+      _ <- IO.race(httpServer.run, IO.race(countWords(stateRef), tick(stateRef)).void)
     } yield ExitCode.Success
 
-  def readFromStream(stateRef: Ref[IO, State]): IO[Unit] =
+  // This method adds a guarantee that if time is over for a current window the data will be wiped,
+  // otherwise we will wait until new data will come.
+  def tick(stateRef: Ref[IO, State]): IO[Unit] =
+    fs2.Stream
+      .awakeEvery[IO](WindowPeriod)
+      .evalMap { _ =>
+        for {
+          currentTimestamp <- timer.clock.realTime(SECONDS)
+          _                <- stateRef.update(resetData(_, currentTimestamp))
+        } yield ()
+      }
+      .compile
+      .drain
+
+  def countWords(stateRef: Ref[IO, State]): IO[Unit] =
     stdinUtf8[IO](1024, stdinBlocker)
       .map { in =>
         in
@@ -46,7 +60,7 @@ object App extends IOApp {
     for {
       latestTimestamp <- stateRef.get.map(_.latestTimestamp)
 
-      _ <- if (msg.timestamp < latestTimestamp + WindowPeriod)
+      _ <- if (msg.timestamp < latestTimestamp + WindowPeriod.toSeconds)
              stateRef.update(updateWordCount(_, msg))
            else
              stateRef.update { s =>
@@ -64,11 +78,14 @@ object App extends IOApp {
   }
 
   def resetData(state: State, msg: StreamMessage): State = {
-    val reminder = msg.timestamp % WindowPeriod
+    val reminder = msg.timestamp % WindowPeriod.toSeconds
     state.copy(
-      latestTimestamp = state.latestTimestamp + (WindowPeriod - reminder),
+      latestTimestamp = state.latestTimestamp + (WindowPeriod.toSeconds - reminder),
       wordsCounts = Map.empty
     )
   }
+
+  def resetData(state: State, currentTimestamp: Long): State =
+    state.copy(latestTimestamp = currentTimestamp, wordsCounts = Map.empty)
 
 }
