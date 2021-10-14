@@ -48,13 +48,14 @@ object App extends IOApp {
   def updateState(stateRef: Ref[IO, State], msg: StreamMessage): IO[Unit] =
     for {
       latestTimestamp <- stateRef.get.map(_.latestTimestamp)
-    } yield
-      if (msg.timestamp < latestTimestamp + WindowPeriod)
-        stateRef.update(updateWordCount(_, msg))
-      else
-        stateRef.update { s =>
-          updateWordCount(updateLatestTimestamp(s), msg)
-        }
+
+      _ <- if (msg.timestamp < latestTimestamp + WindowPeriod)
+             stateRef.update(updateWordCount(_, msg))
+           else
+             stateRef.update { s =>
+               updateWordCount(updateLatestTimestamp(s), msg)
+             }
+    } yield ()
 
   def updateWordCount(state: State, msg: StreamMessage): State = {
     val wordsByType = state.wordsCounts.getOrElse(msg.eventType, Map.empty)
@@ -67,7 +68,8 @@ object App extends IOApp {
 
   def updateLatestTimestamp(state: State): State =
     state.copy(
-      latestTimestamp = state.latestTimestamp + WindowPeriod
+      latestTimestamp = state.latestTimestamp + WindowPeriod,
+      wordsCounts = Map.empty
     )
 
 }
