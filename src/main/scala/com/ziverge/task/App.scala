@@ -2,11 +2,9 @@ package com.ziverge.task
 
 import io.circe.parser._
 import cats.effect.Blocker
-import cats.effect.Clock
 import cats.effect.ExitCode
 import cats.effect.IO
 import cats.syntax.traverse._
-import cats.syntax.flatMap._
 import cats.effect.IOApp
 import fs2.io.stdinUtf8
 
@@ -40,11 +38,7 @@ object App extends IOApp {
           .toList
           .flatMap(decode[StreamMessage](_).toOption)
       }
-      .evalMap { messages =>
-        IO.delay(println(s"Messages: $messages")) >>
-          messages.traverse(msg => updateState(stateRef, msg)).void >>
-          stateRef.get.flatMap(s => IO.delay(println(s"State: $s")))
-      }
+      .evalMap(_.traverse(msg => updateState(stateRef, msg)).void)
       .compile
       .drain
 
