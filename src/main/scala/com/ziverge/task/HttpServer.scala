@@ -4,6 +4,7 @@ import cats.effect.ConcurrentEffect
 import cats.effect.IO
 import cats.effect.Timer
 import cats.effect.concurrent.Ref
+import com.ziverge.task.App.State
 import org.http4s._
 import org.http4s.dsl.io._
 import io.circe.syntax._
@@ -18,7 +19,7 @@ class HttpServer(stateRef: Ref[IO, State]) {
 
   val wordsService = HttpRoutes.of[IO] {
     case GET -> Root / "words" =>
-      stateRef.get.flatMap(s => Ok(WordsCountResponse(s.wordsCounts).asJson))
+      stateRef.get.flatMap(s => Ok(WordsCountResponse(s).asJson))
   }
 
   val httpApp = Router("/" -> wordsService).orNotFound

@@ -1,7 +1,6 @@
 package com.ziverge.test
 
 import com.ziverge.task.App
-import com.ziverge.task.State
 import com.ziverge.task.StreamMessage
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
