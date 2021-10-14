@@ -50,7 +50,7 @@ object App extends IOApp {
              stateRef.update(updateWordCount(_, msg))
            else
              stateRef.update { s =>
-               updateWordCount(updateLatestTimestamp(s), msg)
+               updateWordCount(resetData(s, msg), msg)
              }
     } yield ()
 
@@ -63,10 +63,12 @@ object App extends IOApp {
     )
   }
 
-  def updateLatestTimestamp(state: State): State =
+  def resetData(state: State, msg: StreamMessage): State = {
+    val reminder = msg.timestamp % WindowPeriod
     state.copy(
-      latestTimestamp = state.latestTimestamp + WindowPeriod,
+      latestTimestamp = state.latestTimestamp + (WindowPeriod - reminder),
       wordsCounts = Map.empty
     )
+  }
 
 }
